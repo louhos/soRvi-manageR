@@ -1,0 +1,327 @@
+<?xml version="1.0"?>
+<manageRTools>
+<RTool name="Insert R commands" query="|1|">
+<Parameter label="R commands:" type="textEdit" default="ls()" notnull="true"/>
+<Parameter label="help" type="helpString" default="
+&lt;h4&gt;Insert R commands help&lt;/h4&gt;
+This is a simple test plugin that allows the user to input R commands into a simple text editor, 
+and run the commands in the console.&#xA;The tool does not require any specific R libraries. The 
+default command (&lt;tt&gt;ls()&lt;/tt&gt;), displays all variables and functions in the current 
+R environment." notnull="true"/>
+</RTool>
+<RTool name="Voronoi polygons" category= "Spatial" query=
+"|2| &lt;- local({&#xA;
+  require(deldir)&#xA;
+  crds &lt;- |1|@coords&#xA;
+  z &lt;- deldir(crds[,1], crds[,2])&#xA;
+  w &lt;- tile.list(z)&#xA;
+  polys &lt;- vector(mode='list', length=length(w))&#xA;
+  require(sp)&#xA;
+  for (i in seq(along=polys)) {&#xA;
+    pcrds &lt;- cbind(w[[i]]$x, w[[i]]$y)&#xA;
+    pcrds &lt;- rbind(pcrds, pcrds[1,])&#xA;
+    polys[[i]] &lt;- Polygons(list(Polygon(pcrds)), ID=as.character(i))&#xA;
+  }&#xA;
+  SP &lt;- SpatialPolygons(polys)&#xA;
+  areas &lt;- sapply(slot(SP, 'polygons'), function(x) sapply(slot(x,'Polygons'), slot, 'area'))&#xA;
+  SpatialPolygonsDataFrame(SP, data=data.frame(x=crds[,1], y=crds[,2], row.names=sapply(slot(SP, 
+  'polygons'), function(x) slot(x, 'ID')), area=areas))&#xA;
+})&#xA;">
+<Parameter label="Point layer:" type="spComboBox" default="SpatialPointsDataFrame" notnull="true"/>
+<Parameter label="Output layer:" type="lineEdit" default="voronoi" notnull="true"/>
+<Parameter label="help" type="helpString" default="
+&lt;h4&gt;Voronoi polygons help&lt;/h4&gt;
+Calculate the Voronoi or Thiessen tesselation of an input SpatialPointsDataFrame.&#xA;
+Uses the &lt;tt&gt;sp&lt;/tt&gt; library to get the coordinates of 
+the input SpatialPointsDataFrame, and creates a bounded Voronoi tesselation using the &lt;tt&gt;deldir&lt;/tt&gt; 
+and &lt;tt&gt;tile.list&lt;/tt&gt; functions of the &lt;tt&gt;deldir&lt;/tt&gt; library. Output is a 
+SpatialPolygonsDataFrame, with the X and Y coordinates of the input points as attributes.&#xA;
+After running this plugin, you can acheive the same results by using the &lt;tt&gt;voronoipolygons()&lt;/tt&gt; 
+function in the console." notnull="true"/>
+</RTool>
+<RTool name="Polygon centroids" category= "Spatial" query=
+"|2| &lt;- local({&#xA;
+  proj &lt;- proj4string(|1|)&#xA;
+  coords &lt;- coordinates(|1|)&#xA;
+  attrs &lt;- |1|@data&#xA;
+  centroids &lt;- SpatialPointsDataFrame(coords=coords, &#xA;
+  data=attrs, proj4string=CRS(proj))&#xA;
+})">
+<Parameter label="Polygon layer:" type="spComboBox" default="SpatialPolygonsDataFrame" notnull="true"/>
+<Parameter label="Output layer:" type="lineEdit" default="centroids" notnull="true"/>
+<Parameter label="help" type="helpString" default="
+&lt;h4&gt;Polygon centoids help&lt;/h4&gt;
+Calculate the true centroids, or 'center of mass' for each polygon in an input SpatialPolygonsDataFrame.&#xA;
+Uses the &lt;tt&gt;sp&lt;/tt&gt; library to get the coordinates of the input SpatialPolygonsDataFrame, 
+and creates a new SpatialPointsDataFrame consisting of the centroid coordinates or the polygons, with 
+the attributes of the input SpatialPolygonsDataFrame.&#xA;
+After running this plugin, you can acheive the same results by using the &lt;tt&gt;polygoncentroids()&lt;/tt&gt; 
+function in the console." notnull="true"/>
+</RTool>
+<RTool name="Quick plot" category= "Plotting" query=
+"local({&#xA;
+plot(|1|, type='|2|', main='|3|', sub='|4|', xlab='|5|', 
+ylab='|6|', bty='|7|', lab=c(|8|,|9|,7), las=|10|, |11|)&#xA;        
+if (|12|) {&#xA;
+tmp.fit &lt;- lm(|1| ~ |2|)&#xA;
+abline(tmp.fit, lty='|13|')&#xA;
+}&#xA;
+})">
+<Parameter label="X values:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Plot type:" type="comboBox" default=
+"points;lines;both;overplotted;histogram;stair steps;no plotting" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Scatterplot" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="X label:" type="lineEdit" default="X Axis" notnull="false"/>
+<Parameter label="Y label:" type="lineEdit" default="Y Axis" notnull="false"/>
+<Parameter label="Bounding box:" type="comboBox" default=
+"outline;l-shape;7-shape;c-shape;u-shape;]-shape;none" notnull="true"/>
+<Parameter label="X axis ticks:" type="lineEdit" default="5" notnull="true"/>
+<Parameter label="Y axis ticks:" type="lineEdit" default="5" notnull="true"/>
+<Parameter label="Axis labels:" type="comboBox" default="1;2;3;0" notnull="true"/>
+<Parameter label="Additional parameters:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="help" type="helpString" default="topic:plot" notnull="true"/>
+</RTool>
+
+<RTool name="Polyline profile" category= "Plotting" query=
+"local({   # This 'polyline profile' tool (version 0.91) contributed by Mayeul Kauffmann&#xA;
+library(spatstat)&#xA;
+#gtools is needed for smoothing by the running() function. If not available or not wanted, replace by identity function. &#xA;
+gtools.available  &lt;-  library('gtools',logical.return=TRUE) &#xA;
+if (|6| &amp; gtools.available) {running2 &lt;- running}  else {running2 &lt;- function(x,...){x}} &#xA;
+
+if(|7|) {dev.new()}&#xA;
+DEM  &lt;- |3|&#xA;
+
+if(proj4string(|1|) != proj4string(|3|) ) {print(paste('Polyline and DEM might be in different reference systems. Unpredected behaviour may occur.','Polyline SRC:',proj4string(|1|),'DEM SRC:', proj4string(|3|) ,sep='   ')) } #TODO: FIXME by reprojecting polyline into DEM projection&#xA;
+my.projection&lt;- proj4string(|3|) &#xA;
+smoothing.window &lt;- 2*round(|5| / 2)   # k must be odd below in runmed( ,k=smoothing.window+1), so smoothing.window must be even&#xA;
+coord.path &lt;- coordinates(|1|)[[|2|]][[1]]&#xA;
+path.window&lt;-as.owin(c(min(coord.path[,1]), max(coord.path[,1]), min(coord.path[,2]), max(coord.path[,2])))&#xA;
+path.psp&lt;-as.psp(cbind(coord.path[1:(nrow(coord.path)-1),],coord.path[2:nrow(coord.path),]), window=path.window)&#xA;
+path.points&lt;-pointsOnLines(path.psp,eps=|4|) #sample elevation every eps meters or degrees &#xA;
+path.points.SP&lt;-SpatialPoints(cbind(path.points$x,path.points$y)[!is.na(path.points$x),], proj4string=CRS(my.projection))&#xA;
+path.points.elev&lt;-overlay(DEM,path.points.SP)$band1&#xA;
+elevation.stats&lt;-function(path.points.elev=path.points.elev){&#xA;
+  deniv&lt;-diff(path.points.elev)&#xA;
+  #smoothed.deniv&lt;-diff((runmed(path.points.elev, k=smoothing.window+1))) #would not requires gtools package &#xA;
+  smoothed.deniv&lt;- diff(running2(runmed(path.points.elev, k=smoothing.window+1), width=smoothing.window)) # much better smoothing but requires gtools&#xA;
+  cum.pos.deniv&lt;-sum(deniv[deniv>0])&#xA;
+  cum.neg.deniv&lt;-sum(deniv[deniv&lt;0])&#xA;
+  smoothed.cum.pos.deniv&lt;-sum(smoothed.deniv[smoothed.deniv>0])&#xA;
+  smoothed.cum.neg.deniv&lt;-sum(smoothed.deniv[smoothed.deniv&lt;0])&#xA;  
+  elevation.start &lt;- path.points.elev[1]&#xA;
+  elevation.end &lt;- path.points.elev[length(path.points.elev)]&#xA;
+  lowest &lt;- min(path.points.elev)&#xA;
+  highest&lt;- max(path.points.elev)&#xA;
+  path.length&lt;-sum(lengths.psp(path.psp))&#xA;
+  cbind(elevation.start, elevation.end, lowest, highest, cum.pos.deniv, cum.neg.deniv,smoothed.cum.pos.deniv,smoothed.cum.neg.deniv,  path.length)&#xA;
+}&#xA;
+print(elevation.stats(path.points.elev))&#xA;
+plot(path.points.elev, type='l',xlab='Distance',ylab='Elevation', xaxt='n')&#xA;
+points(running2(runmed(path.points.elev, k=smoothing.window+1), width=smoothing.window), pch='.', col='red')&#xA;
+par(new=T) # create new graph to fix the horizontal axis &#xA;
+# FIXME: next line gives strange error like: 'ascii' codec can't decode byte 0xc3 in position 76: ordinal not in range(128) &#xA;
+#plot( x = c( 0, 5000 ), y = c(lowest, highest), yaxt = 'n', pch= '', xlab = '', ylab = '') &#xA;
+#... so we need to compute AGAIN some values... &#xA;
+plot( x = c( 0, sum(lengths.psp(path.psp))), y = c(min(path.points.elev), max(path.points.elev)), yaxt = 'n', pch= '', xlab = '', ylab = '') &#xA;
+
+})">
+<Parameter label="Layer containing polyline(s):" type="spComboBox" default="SpatialLinesDataFrame" notnull="true"/>
+<Parameter label="Polyline number to profile:" type="lineEdit" default="1" notnull="true"/><!-- chosing e.g. '1' will take first polyline of the selected layer in: coordinates(|1|)[[|2|]] ; TODO: if there is an attribute called 'name' in the table of the polyline layer, propose the name from these names -->
+<Parameter label="Digital Elevation Model:" type="spComboBox" default="SpatialGridDataFrame" notnull="true"/>
+<Parameter label="Elevation sampling resolution (in projected unit):" type="lineEdit" default="1" notnull="true"/><!-- if DEM and polyline unit is meters, a value of 1 to 10 for e.g. ASTER data makes sense -->
+<Parameter label="Smoothing window:" type="lineEdit" default="50" notnull="true"/>
+<Parameter label="Advanced smoothing (only with gtools package):" type="comboBox" default="TRUE;FALSE" notnull="true"/>
+<Parameter label="Draw on a new graphic device:" type="comboBox" default="TRUE;FALSE" notnull="true"/>
+
+</RTool>
+<RTool name="Scatterplot" category= "Plotting" query=
+"local({&#xA;
+plot(x=|1|, y=|2|, type='p', main='|3|', sub='|4|', xlab='|5|', 
+ylab='|6|', bty='|7|', lab=c(|8|,|9|,7), las=|10|, |11|)&#xA;        
+if (|12|) {&#xA;
+tmp.fit &lt;- lm(|1| ~ |2|)&#xA;
+abline(tmp.fit, lty='|13|')&#xA;
+}&#xA;
+})">
+<Parameter label="X values:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Y values:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Scatterplot" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="X label:" type="lineEdit" default="X Axis" notnull="false"/>
+<Parameter label="Y label:" type="lineEdit" default="Y Axis" notnull="false"/>
+<Parameter label="Bounding box:" type="comboBox" default=
+"outline;l-shape;7-shape;c-shape;u-shape;]-shape;none" notnull="true"/>
+<Parameter label="X axis ticks:" type="lineEdit" default="5" notnull="true"/>
+<Parameter label="Y axis ticks:" type="lineEdit" default="5" notnull="true"/>
+<Parameter label="Axis labels:" type="comboBox" default="1;2;3;0" notnull="true"/>
+<Parameter label="Additional parameters:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="Add trend line:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Trend line style:" type="comboBox" default=
+"solid;dashed;dotted;dotdash;longdash;twodash" notnull="true"/>
+<Parameter label="help" type="helpString" default="topic:plot" notnull="true"/>
+</RTool>
+<RTool name="Histogram" category= "Plotting" query=
+"local({&#xA;
+hist(|1|, breaks='|2|', main='|4|', sub='|5|', xlab='|6|', bty='|7|', 
+freq=ifelse('|3|'=='Frequency',TRUE,FALSE), |10|)&#xA;
+if (|8|) lines(density(|1|), lty='|9|')&#xA;
+})">
+<Parameter label="Input values:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Break calculation:" type="comboBox" default=
+"Sturges;Scott;Freedman-Diaconis" notnull="true"/>
+<Parameter label="Plot type:" type="comboBox" default="Frequency;Density" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Histogram" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="X label:" type="lineEdit" default="X Axis" notnull="false"/>
+<Parameter label="Bounding box:" type="comboBox" default=
+"outline;l-shape;7-shape;c-shape;u-shape;]-shape;none" notnull="true"/>
+<Parameter label="Add probability distribution:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Line style:" type="comboBox" default=
+"solid;dashed;dotted;dotdash;longdash;twodash" notnull="true"/>
+<Parameter label="Additional parameters:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="help" type="helpString" default="topic:hist" notnull="true"/>
+</RTool>
+<RTool name="Box-plot" category= "Plotting" query=
+"local({&#xA;
+boxplot(|1|, varwidth=|2|, notch=|3|, outline=|4|, horizontal=|5|, 
+main='|6|', sub='|7|', xlab='|8|', ylab='|9|')&#xA;
+})">
+<Parameter label="Input data:" type="spComboBox" default="numeric;data.frame" notnull="true"/>
+<Parameter label="Use variable width boxes:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Add box notches:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Show outliers:" type="comboBox" default="TRUE;FALSE" notnull="true"/>
+<Parameter label="Plot boxes horizontally:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Box-plot" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="X label:" type="lineEdit" default="X Axis" notnull="false"/>
+<Parameter label="Y label:" type="lineEdit" default="Y Axis" notnull="false"/>
+<Parameter label="help" type="helpString" default="topic:boxplot" notnull="true"/>
+</RTool>
+<RTool name="Pie-chart" category= "Plotting" query=
+"local({&#xA;
+pie(|1|, clockwise=|2|, main='|3|', sub='|4|', |5| )&#xA;
+})">
+<Parameter label="Input data:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Clockwise:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Pie-chart" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="Additional parameters:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="help" type="helpString" default="topic:pie" notnull="true"/>
+</RTool>
+<RTool name="Bar-graph" category= "Plotting" query="
+local({&#xA;
+barplot(|1|, horiz=|2|, main='|3|', sub='|4|', xlab='|5|', ylab='|6|', |7|)&#xA;
+})">
+<Parameter label="Input data:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Horizontal:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Bar-graph" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="X label:" type="lineEdit" default="X Axis" notnull="false"/>
+<Parameter label="Y label:" type="lineEdit" default="Y Axis" notnull="false"/>
+<Parameter label="Additional parameters:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="help" type="helpString" default="topic:barplot" notnull="true"/>
+</RTool>
+<RTool name="Density plot" category= "Plotting" query="
+local({&#xA;
+plot(density(|1|, bw='|2|', adjust=|3|, kern='|4|', n=|5|, na.rm=|6|), 
+main='|7|', sub='|8|', xlab='|9|', ylab='|10|', |11|)&#xA;
+if (|12|) rug(|1|, |13|, |14|, side=|15|)
+})">
+<Parameter label="Input data:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Bandwidth:" type="comboBox" default="nrd0;nrd;ucv;bcv;SJ-ste;SJ-dpi" notnull="true"/>
+<Parameter label="Bandwidth adjustment:" type="doubleSpinBox" default="1" notnull="true"/>
+<Parameter label="Smoothing kernel:" type="comboBox" default=
+"gaussian;rectangular;triangular;epanechnikov;biweight;cosine;optcosine" notnull="true"/>
+<Parameter label="Resolution:" type="doubleSpinBox" default="512.00" notnull="true"/>
+<Parameter label="Remove NA values:" type="comboBox" default="TRUE;FALSE" notnull="true"/>
+<Parameter label="Main title:" type="lineEdit" default="Density plot" notnull="false"/>
+<Parameter label="Sub title:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="X label:" type="lineEdit" default="X Axis" notnull="false"/>
+<Parameter label="Y label:" type="lineEdit" default="Y Axis" notnull="false"/>
+<Parameter label="Additional parameters:" type="lineEdit" default="" notnull="false"/>
+<Parameter label="Add rug:" type="comboBox" default="FALSE;TRUE" notnull="true"/>
+<Parameter label="Tick size:" type="doubleSpinBox" default="0.03" notnull="true"/>
+<Parameter label="Tick width:" type="doubleSpinBox" default="0.50" notnull="true"/>
+<Parameter label="Rug placement:" type="comboBox" default="1;3" notnull="true"/>
+<Parameter label="help" type="helpString" default="topic:density" notnull="true"/>
+</RTool>
+<RTool name="Descriptive statistics" category= "Statistics" query=
+"local({&#xA;
+tmp &lt;- data.frame(|1|)&#xA;
+keep &lt;- names(tmp)&#xA;
+first &lt;- TRUE&#xA;
+for (i in 1:ncol(tmp)) {&#xA;
+x &lt;- unlist(tmp[i])&#xA;
+if (!is.numeric(x)) { # Not a numeric vector!&#xA;
+Res &lt;- list(median=NA, mean=NA, var=NA, stddev=NA, coefvar=NA,
+            min=NA, max=NA, sum=NA, range=NA, nas=NA, nulls=NA, count=NA)&#xA;
+} else {&#xA;
+Nas &lt;- sum(as.numeric(is.na(x)))&#xA;
+x &lt;- x[!is.na(x)]&#xA;
+Vals &lt;- length(x)&#xA;
+Nulls &lt;- sum(as.numeric(x==0))&#xA;
+Min &lt;- min(x)&#xA;
+Max &lt;- max(x)&#xA;
+Range &lt;- Max-Min&#xA;
+Sum &lt;- sum(x)&#xA;
+Median &lt;- median(x)&#xA;
+Mean &lt;- mean(x)&#xA;
+Var &lt;- var(x)&#xA;
+StdDev &lt;- sqrt(Var)&#xA;
+CoefVar &lt;- StdDev/Mean&#xA;
+Res &lt;- list(median=Median, mean=Mean, var=Var, stddev=StdDev, coefvar=CoefVar, 
+min=Min, max=Max, sum=Sum, range=Range, nas=Nas, nulls=Nulls, count=Vals)&#xA;
+}&#xA;
+if (first) {&#xA;
+Out &lt;- data.frame(Res)&#xA;
+first &lt;- FALSE &#xA;
+} else {&#xA;
+Out &lt;- rbind(Out, Res)&#xA;
+}&#xA;
+}&#xA;
+row.names(Out) &lt;- as.list(keep)&#xA;
+Out&#xA;
+})">
+<Parameter label="Input data:" type="spComboBox" default="numeric;data.frame" notnull="true"/>
+<Parameter label="help" type="helpString" default="
+&lt;h4&gt;Descriptive statistics help&lt;/h4&gt;
+Produce table of descriptive statistics including median, mean, variance, standard deviation, 
+coeficient of variation, minimum, maximum, sum, range, as well as the number of NAs, Nulls (0),
+and the total count.&lt;br&gt;
+&lt;b&gt;Note&lt;/b&gt;: None numeric vectors and data.frame fields will return NAs for all 
+descriptive statistics.&lt;br&gt;&lt;br&gt;
+This tool is based on the &lt;tt&gt;stat.desc&lt;/tt&gt; function from the &lt;tt&gt;pastecs&lt;/tt&gt;
+library." notnull="true"/>
+</RTool>
+<RTool name="Summary statistics" category= "Statistics" query=
+"local({&#xA;
+summary(|1|)
+})">
+<Parameter label="Input data:" type="spComboBox" default="all" notnull="true"/>
+<Parameter label="help" type="helpString" default="topic:summary" notnull="true"/>
+</RTool>
+<RTool name="Correlation matrix" category= "Statistics" query=
+"local({&#xA;
+tmp &lt;- data.frame(|1|)&#xA;
+cor(tmp, use='|2|', method='|3|')&#xA;
+})">
+<Parameter label="Input data:" type="spListWidget" default="numeric" notnull=","/>
+<Parameter label="Use (with NAs):" type="comboBox" default=
+"everything;all.obs;complete.obs;na.or.complete;pairwise.complete.obs"
+notnull="true"/>
+<Parameter label="Method:" type="comboBox" default="pearson;kendall;spearman" notnull="true"/>
+<Parameter label="help" type="helpString" default="topic:cor" notnull="true"/>
+</RTool>
+<RTool name="Linear regression" category= "Statistics" query=
+"local({&#xA;
+if (|3|) summary.lm(lm(|1| ~ |2|))&#xA;
+else summary.lm(lm(|1| ~ 0 + |2|))&#xA;
+})">
+<Parameter label="Dependant variable:" type="spComboBox" default="numeric" notnull="true"/>
+<Parameter label="Independent variables:" type="spListWidget" default="numeric" notnull="+"/>
+<Parameter label="Include intercept:" type="comboBox" default="TRUE;FALSE" notnull="true"/>
+<Parameter label="help" type="helpString" default="topic:lm" notnull="true"/>
+</RTool>
+</manageRTools>
