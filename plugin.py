@@ -47,7 +47,7 @@ class Plugin:
         self.action = QAction(QIcon( ":mActionIcon.png" ), "manageR", self.iface.mainWindow())
         self.action.setWhatsThis("Interface to the R statistical programming language")
         self.action.setStatusTip("Interface to the R statistical programming language")
-        QObject.connect(self.action, SIGNAL("activated()"), self.run)
+        QObject.connect(self.action, SIGNAL("triggered()"), self.run)
         # Add to the main toolbar
         self.iface.addToolBarIcon(self.action)
 
@@ -58,4 +58,4 @@ class Plugin:
         from manageR import MainWindow, loadConfig, saveConfig
         loadConfig()
         if not MainWindow.Instances:
-            MainWindow(self.iface, self.version,isConsole=True).show()
+            MainWindow(self.iface, self.version,isConsole=True, isStandalone=False).show()

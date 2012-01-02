@@ -33,11 +33,12 @@ except ImportError:
                         + "\nPlease ensure that both R, and the corresponding version of Rpy2 are correctly installed.")
 
 from manageR import isLibraryLoaded
- 
-isLibraryLoaded("sorvi")
-rdata = robjects.r["data"]
-data = rdata(package="sorvi")
-for key, value in data.iteritems():
-    if key == 'results':
-        rows_i = robjects.IntVector((1,4))
-        print value.rx(2, True)
+
+def listDataSets(package): 
+    isLibraryLoaded(package)
+    rdata = robjects.r["data"]
+    data = rdata(package=package).rx2('results')
+    return [data.rx(row_i, True)[2] for row_i in range(1, data.nrow + 1)]
+
+if __name__ == '__main__':
+    print(listDataSets('sorvi'))

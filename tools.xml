@@ -452,8 +452,7 @@ if (|6|) |5|">
 <Parameter label="help" type="helpString" default="topic:localmoran" notnull="true"/>
 </RTool>
 <RTool name="Load data" category="soRvi" query=
-"require(sorvi)&#xA;
-data(|1|)">
-<Parameter label="Data set:" type="comboBox" default="MML;Oikotie;PKS.aluejakokartat;PKS.lukiot" notnull="true"/>  
+"data(|1|)">
+<Parameter label="Data set:" type="dataComboBox" default="sorvi" notnull="true"/>  
 </RTool>
 </manageRTools>
