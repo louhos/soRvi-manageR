@@ -3799,20 +3799,38 @@ class MainWindow(QMainWindow):
             workspaceMenu = self.menuBar().addMenu("Wo&rkspace")
             self.addActions(workspaceMenu, (workspaceLoadAction, 
             workspaceSaveAction))
+            
             try:
-                pluginsMenu = self.menuBar().addMenu("A&nalysis")
-                pluginCreator = PluginManager(self)
-                pluginCreator.createActions(pluginsMenu)
+                analysisCreator = PluginManager("tools.xml", self)
+                analysisMenu = self.menuBar().addMenu("A&nalysis")
+                analysisCreator.createActions(analysisMenu)
             except Exception, e:
                 message = QMessageBox(self)
                 message.setWindowTitle("manageR load error")
-                message.setText("Error generating plugin interfaces.\n"
+                message.setText("Error generating analysis plugin interfaces.\n"
                 "Please ensure that your tools.xml file is correctly formatted.")
                 message.setInformativeText("Note: Analysis plugins will be disabled for "
                 "the current manageR session." )
                 message.setDetailedText(unicode(e))
                 message.exec_()
-                pluginsMenu.deleteLater()
+                analysisMenu.deleteLater()
+                
+            try:
+                sorviCreator = PluginManager("sorvi.xml", self)
+                sorviMenu = self.menuBar().addMenu("so&Rvi")
+                sorviCreator.createActions(sorviMenu)
+            except Exception, e:
+                message = QMessageBox(self)
+                message.setWindowTitle("manageR load error")
+                message.setText("Error generating soRvi plugin interfaces.\n"
+                "Please ensure that your sorvi.xml file is correctly formatted.")
+                message.setInformativeText("Note: soRvi plugins will be disabled for "
+                "the current manageR session." )
+                message.setDetailedText(unicode(e))
+                message.exec_()
+                sorviMenu.deleteLater()
+            
+        
         self.viewMenu = self.menuBar().addMenu("&View")
         self.windowMenu = self.menuBar().addMenu("&Window")
         self.connect(self.windowMenu, SIGNAL("aboutToShow()"),
@@ -5442,11 +5460,11 @@ class HelpForm(QDialog):
         self.setWindowTitle("R plugin - Help")
 
 class PluginManager:
-    def __init__(self, parent):#, iface):
+    def __init__(self, plugins_file, parent):#, iface):
         ## Save reference to the QGIS interface
         #self.iface = iface
         #self.tools = os.path.join(str(os.path.abspath(os.path.dirname(__file__))),"tools.xml")
-        self.tools = os.path.join(CURRENTDIR,"tools.xml")
+        self.tools = os.path.join(CURRENTDIR, plugins_file)
         self.parent = parent
 
     def makeCaller(self, n):

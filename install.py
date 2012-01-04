@@ -6,7 +6,7 @@ import sys
 
 # List file that will be copied to QGIS plugins dir
 FILES = ['__init__.py', 'LICENSE', 'manageR.py', 
-         'plugin.py', 'resources.py', 'tools.xml']
+         'plugin.py', 'resources.py', 'tools.xml', 'sorvi.xml']
 PLUGIN_DIR = 'soRvi-manageR'
     
 QGIS_HOME = os.path.expanduser('~/.qgis/python/plugins')

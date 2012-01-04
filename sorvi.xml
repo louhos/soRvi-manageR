@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<manageRTools>
+	<RTool name="Load data" query=
+		"data(|1|);">
+		<Parameter label="Data set:" type="dataComboBox" default="sorvi" notnull="true"/>  
+	</RTool>
+	<RTool name="GetHSY" category="Getters" query=
+		"library(sorvi)&#xA;
+		 sp.hsy &lt;- GetHSY(which.data = '|1|');">
+		<Parameter label="Data set:" type="comboBox" default="Vaestoruudukko;Rakennustietoruudukko;SeutuRAMAVA;key.KATAKER" notnull="true"/>  
+	</RTool>
+</manageRTools>
