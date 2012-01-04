@@ -1,0 +1,26 @@
+
+1. Linux
+
+2. MacOS
+
+3. Windows 7
+
+	Tested ONLY on 64 bit Windows 7 Ultimate, QGIS installed with the stand-alone 
+	installer (http://hub.qgis.org/projects/quantum-gis/wiki/Download#Standalone-Installer-recommended-for-new-users).
+  
+    * Dependencies
+  
+		- QGIS (tested with 1.7.3)
+		- R (tested with 2.14.0) -> installed separately
+		- RPy2 (tested with 2.0.3) -> included in the QGIS stand-alone installer
+  
+	* Installation
+	
+	
+	* Configuration
+		- With recent releases of R both 32 and 64 bit versions of R are installed
+		  in R_HOME\bin\i386 and R_HOME\bin\x64. RPy2 does not know how to deal 
+		  with these paths so after installing QGIS copy the content of R_HOME\bin\i386
+		  to R_HOME\bin if not using a 64 bit build of QGIS(*WARNING* this may break 
+		  your current system)
+  

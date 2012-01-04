@@ -8,10 +8,8 @@ import sys
 FILES = ['__init__.py', 'LICENSE', 'manageR.py', 
          'plugin.py', 'resources.py', 'tools.xml']
 PLUGIN_DIR = 'soRvi-manageR'
-
-if sys.platform == 'linux2':
     
-    QGIS_HOME = os.path.expanduser('~/.qgis/python/plugins')
+QGIS_HOME = os.path.expanduser('~/.qgis/python/plugins')
 
 PLUGIN_DIR = os.path.join(QGIS_HOME, PLUGIN_DIR)
 
